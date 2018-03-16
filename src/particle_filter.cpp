@@ -31,7 +31,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   // Add random Gaussian noise to each particle.
   // NOTE: Consult particle_filter.h for more information about this method (and others in this file).
         
-  num_particles = 100;
+  num_particles = 75;
 
   // Normal distribution for sensor noise.
   normal_distribution<double> dist_x(0, std[0]);
@@ -76,16 +76,22 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
   normal_distribution<double> dist_y(0, std_pos[1]);
   normal_distribution<double> dist_theta(0, std_pos[2]);
 
-  
-
   double div_vel_yawr = velocity / yaw_rate;
   double prod_yawr_delt = yaw_rate * delta_t;
 
   for( int i = 0; i < num_particles; i++ ) {
 
-    particles[i].x += div_vel_yawr * ( sin(particles[i].theta + prod_yawr_delt) - sin(particles[i].theta) );
-    particles[i].y += div_vel_yawr * ( cos(particles[i].theta) - cos(particles[i].theta + prod_yawr_delt) );
-    particles[i].theta += prod_yawr_delt;
+    // Handle yaw_rate close to 0.
+    if ( fabs(yaw_rate) < 0.00001 ) {
+      particles[i].x += velocity * delta_t * cos( particles[i].theta );
+      particles[i].y += velocity * delta_t * sin( particles[i].theta );
+    }
+    else {
+
+      particles[i].x += div_vel_yawr * ( sin(particles[i].theta + prod_yawr_delt) - sin(particles[i].theta) );
+      particles[i].y += div_vel_yawr * ( cos(particles[i].theta) - cos(particles[i].theta + prod_yawr_delt) );
+      particles[i].theta += prod_yawr_delt;
+    }
 
     // Add noise.
     particles[i].x += dist_x(gen);
